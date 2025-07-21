@@ -1,5 +1,9 @@
 <?php
 
+use MediaWiki\MediaWikiServices;
+use MediaWiki\Revision\SlotRecord;
+use MediaWiki\Title\Title;
+
 class Preloader {
 	/** Hook function for the preloading */
 	public static function mainHook( &$text, &$title ) {
@@ -38,18 +42,11 @@ class Preloader {
 	static function sourceText( $page ) {
 		$title = Title::newFromText( $page );
 		if ( $title && $title->exists() ) {
-			$revisionRecord = MediaWiki\MediaWikiServices::getInstance()->getRevisionLookup()->getRevisionByTitle( $title );
-                        if ( class_exists( 'MediaWiki\Revision\SlotRecord' ) ) {
-                        // MediaWiki >= 1.32
-                                $role = MediaWiki\Revision\SlotRecord::MAIN;
-                        } else {
-                        // MediaWiki <= 1.31
-                                $role = MediaWiki\Storage\SlotRecord::MAIN;
-                        }
+			$revisionRecord = MediaWikiServices::getInstance()->getRevisionLookup()->getRevisionByTitle( $title );
 
-                        $content = $revisionRecord->getContent( $role );
-                        $text = ContentHandler::getContentText( $content );
-                        return self::transform( $text );
+			$content = $revisionRecord->getContent( SlotRecord::MAIN );
+			$text = ContentHandler::getContentText( $content );
+			return self::transform( $text );
 		} else {
 			return false;
 		}

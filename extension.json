@@ -1,6 +1,6 @@
 {
 	"name": "Preloader",
-	"version": "1.4.1",
+	"version": "1.4.2",
 	"author": [
 		"Rob Church",
 		"Troy Engel",
@@ -11,6 +11,9 @@
 	"url": "https://www.mediawiki.org/wiki/Extension:Preloader",
 	"descriptionmsg": "preloader-desc",
 	"type": "parserhook",
+	"requires": {
+		"MediaWiki": ">= 1.39.4"
+	},
 	"config": {
 		"PreloaderSource": {
 			"0": "Template:Preload",
