@@ -1,12 +1,22 @@
 <?php
 
-use MediaWiki\MediaWikiServices;
+use MediaWiki\Hook\EditFormPreloadTextHook;
+use MediaWiki\Revision\RevisionLookup;
 use MediaWiki\Revision\SlotRecord;
 use MediaWiki\Title\Title;
 
-class Preloader {
-	/** Hook function for the preloading */
-	public static function mainHook( &$text, &$title ) {
+class Preloader implements EditFormPreloadTextHook {
+
+	private RevisionLookup $revisionLookup;
+
+	public function __construct( RevisionLookup $revisionLookup ) {
+		$this->revisionLookup = $revisionLookup;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function onEditFormPreloadText( &$text, $title ): bool {
 		$src = self::preloadSource( $title->getNamespace() );
 		if ( $src ) {
 			$stx = self::sourceText( $src );
@@ -24,13 +34,9 @@ class Preloader {
 	 * @param int $namespace Namespace to check for
 	 * @return string|bool Name of the page to be preloaded or bool false
 	 */
-	static function preloadSource( $namespace ) {
+	private function preloadSource( int $namespace ): bool|string {
 		global $wgPreloaderSource;
-		if ( isset( $wgPreloaderSource[$namespace] ) ) {
-			return $wgPreloaderSource[$namespace];
-		} else {
-			return false;
-		}
+		return $wgPreloaderSource[$namespace] ?? false;
 	}
 
 	/**
@@ -39,13 +45,13 @@ class Preloader {
 	 * @param string $page Text form of the page title
 	 * @return string|bool
 	 */
-	static function sourceText( $page ) {
+	private function sourceText( string $page ): bool|string {
 		$title = Title::newFromText( $page );
 		if ( $title && $title->exists() ) {
-			$revisionRecord = MediaWikiServices::getInstance()->getRevisionLookup()->getRevisionByTitle( $title );
+			$revisionRecord = $this->revisionLookup->getRevisionByTitle( $title );
 
 			$content = $revisionRecord->getContent( SlotRecord::MAIN );
-			$text = ContentHandler::getContentText( $content );
+			$text = $content instanceof TextContent ? $content->getText() : '';
 			return self::transform( $text );
 		} else {
 			return false;
@@ -55,10 +61,10 @@ class Preloader {
 	/**
 	 * Remove sections from the text and trim whitespace
 	 *
-	 * @param $text
+	 * @param string $text
 	 * @return string
 	 */
-	static function transform( $text ) {
+	private function transform( string $text ): string {
 		$text = trim( preg_replace( '/<\/?includeonly>/s', '', $text ) );
 		return trim( preg_replace( '/<noinclude>.*<\/noinclude>/s', '', $text ) );
 	}

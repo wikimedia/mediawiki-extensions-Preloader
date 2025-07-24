@@ -28,8 +28,16 @@
 	"AutoloadClasses": {
 		"Preloader": "Preloader.class.php"
 	},
+	"HookHandlers": {
+		"PreloaderHooks": {
+			"class": "Preloader",
+			"services": [
+				"RevisionLookup"
+			]
+		}
+	},
 	"Hooks": {
-		"EditFormPreloadText": "Preloader::mainHook"
+		"EditFormPreloadText": "PreloaderHooks"
 	},
 	"manifest_version": 1
 }
